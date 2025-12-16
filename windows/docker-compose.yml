@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  windows:
+    image: dockurr/windows
+    container_name: windows-office-vm
+    environment:
+      VERSION: "tiny11"          # Ringan, boot cepat, cocok Office 365
+      RAM_SIZE: "5G"             # Mulai dari 5G, kalau lancar turunkan ke 4G
+      CPU_CORES: "4"             # Sesuaikan dengan CPU-mu
+      DISK_SIZE: "64G"           # Cukup untuk Windows + Office + dokumen
+    devices:
+      - /dev/kvm                 # Wajib untuk performa bagus
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "8006:8006"              # NoVNC (setup awal via browser)
+      - "3389:3389"              # RDP untuk WinApps
+    volumes:
+      - ./windows-data:/storage   # <<< PERSISTENT: semua data Windows di sini
+    stop_grace_period: 2m
+    restart: no                  # Kita kontrol manual via script
