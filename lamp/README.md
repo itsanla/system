@@ -12,7 +12,6 @@ sudo nano /etc/phpmyadmin/config.inc.php
 Ganti seluruh isi dalam blok `if (!empty($dbname))` dengan konfigurasi berikut:
 
 ```php
-/* Configure according to dbconfig-common if enabled */
 if (!empty($dbname)) {
     $cfg['Servers'][$i]['auth_type'] = 'cookie';
     $cfg['Servers'][$i]['host'] = '127.0.0.1';
