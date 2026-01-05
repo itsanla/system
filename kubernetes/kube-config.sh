@@ -76,6 +76,7 @@ sudo systemctl restart containerd
 # ==========================================
 sudo apt-get update
 sudo apt-get install -y apt-transport-https ca-certificates curl gpg
+sudo apt-get install -y conntrack socat
 
 # Download Public Key Kubernetes (Versi v1.35 sesuai request Anda)
 # Catatan: Pastikan v1.35 sudah rilis saat anda menjalankan ini. 
