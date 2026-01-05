@@ -11,5 +11,5 @@ chmod +x ssm-init.sh
 ```bash
 curl -o ssm-run.sh -L https://raw.githubusercontent.com/itsanla/system/refs/heads/main/aws/ssm-run.sh
 chmod +x ssm-run.sh
-ssm-run.sh
+./ssm-run.sh
 ```
