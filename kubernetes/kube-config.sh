@@ -1,6 +1,17 @@
 #!/bin/bash
 
 # ==========================================
+# 0. SATPAM APT (ANTI-BENTROK)
+# ==========================================
+# Fungsi ini akan looping terus sampai apt update background selesai
+echo "Menunggu antrian APT..."
+while sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1 || sudo fuser /var/lib/apt/lists/lock >/dev/null 2>&1 || sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+  echo "Sistem sedang sibuk update background. Menunggu 5 detik..."
+  sleep 5
+done
+echo "Antrian kosong. Script mulai dijalankan!"
+
+# ==========================================
 # 1. PERSIAPAN KERNEL & NETWORK (PENTING!)
 # ==========================================
 # Matikan Swap (Wajib untuk Kubernetes)
