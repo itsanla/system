@@ -1,18 +1,16 @@
-version: '3.8'
-
 services:
   mysql:
     image: mysql:8.0
-    container_name: mysql-lamb
-    restart: "no"                  # penting: tidak restart otomatis
+    container_name: mysql-lamp
+    restart: "no"
     environment:
-      MYSQL_ROOT_PASSWORD: 070078
-      MYSQL_USER: anla
-      MYSQL_PASSWORD: 070078
+      MYSQL_ROOT_PASSWORD: "070078"
+      MYSQL_ALLOW_EMPTY_PASSWORD: "no"
     volumes:
       - mysql-data:/var/lib/mysql
     ports:
       - "3306:3306"
+    command: --default-authentication-plugin=mysql_native_password
 
 volumes:
   mysql-data:
