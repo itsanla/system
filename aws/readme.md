@@ -1,8 +1,7 @@
 ## setup kubernetes cluster
 
 ```bash
-sudo apt update
-sudo apt install awscli -y
+sudo snap install aws-cli --classic
 aws --version
 ```
 
