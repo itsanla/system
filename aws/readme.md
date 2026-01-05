@@ -4,6 +4,9 @@
 sudo snap install aws-cli --classic
 aws --version
 ```
+```bash
+tail -n 5 /var/log/cloud-init-output.log
+```
 
 Salin dan jalankan perintah ini di terminal untuk mengaktifkan semua script:
 
