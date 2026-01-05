@@ -1,0 +1,15 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: gp3
+  annotations:
+    # Baris ini menjadikan gp3 sebagai default. 
+    # Jadi kalau buat PVC tanpa sebut nama storage class, otomatis pakai ini.
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer
+# Baris ini memungkinkan Anda memperbesar ukuran disk di masa depan tanpa hapus data
+allowVolumeExpansion: true 
+parameters:
+  type: gp3
+  fsType: ext4
