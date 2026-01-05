@@ -1,5 +1,11 @@
 ## setup kubernetes cluster
 
+```bash
+sudo apt update
+sudo apt install awscli -y
+aws --version
+```
+
 Salin dan jalankan perintah ini di terminal untuk mengaktifkan semua script:
 
 ```bash
