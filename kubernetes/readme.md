@@ -12,3 +12,6 @@ curl -sL https://raw.githubusercontent.com/itsanla/system/refs/heads/main/kubern
 ```bash
 curl -sL https://raw.githubusercontent.com/itsanla/system/refs/heads/main/kubernetes/kube-storage.sh | bash
 ```
+```bash
+kubectl apply -f https://raw.githubusercontent.com/itsanla/system/refs/heads/main/kubernetes/sc-gp3.yaml
+```
