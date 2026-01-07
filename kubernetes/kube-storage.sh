@@ -1,8 +1,9 @@
 #!/bin/bash
 
-# ==========================================
-# AWS EBS CSI DRIVER INSTALLER (OPTIMIZED)
-# ==========================================
+# ==========================================================
+# AWS EBS CSI DRIVER INSTALLER (FINAL FIXED VERSION)
+# Fixes: Port Conflict, Region Mismatch, Node Labeling
+# ==========================================================
 
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -24,48 +25,73 @@ until kubectl get deployment -n kube-system ebs-csi-controller > /dev/null 2>&1;
 done
 
 # ==============================================================================
-# PATCH 1: HOST NETWORK (Solusi Tembok Calico/IMDSv2)
+# STEP 2: REGION DETECTION & NODE LABELING (CRUCIAL!)
 # ==============================================================================
-echo -e "${GREEN}[2] Menerapkan 'Jurus Host Network' (Bypass Calico)...${NC}"
-# Ini penting agar Pod bisa akses metadata AWS tanpa terblokir CNI plugin
+echo -e "${GREEN}[2] Mendeteksi Region & Melabeli Node...${NC}"
+
+# Coba ambil Token IMDSv2 (Agar support OS AWS terbaru)
+TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+if [ -z "$TOKEN" ]; then
+    # Fallback ke IMDSv1
+    AZ=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
+else
+    # Pakai Token
+    AZ=$(curl -s -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/placement/availability-zone)
+fi
+
+# Logika Region (Safe Mode - pakai sed agar tidak error syntax bash)
+if [ -z "$AZ" ]; then
+    REGION="ap-southeast-1" # Fallback Manual
+    echo -e "${RED}   ! Gagal detect metadata, memaksa default: $REGION${NC}"
+else
+    REGION=$(echo $AZ | sed 's/[a-z]$//')
+    echo -e "${YELLOW}   -> Terdeteksi Zone: $AZ | Region: $REGION${NC}"
+fi
+
+# Apply Label ke SEMUA Node (Agar Driver tidak bingung lokasi)
+echo "   -> Melabeli topology ke semua node..."
+NODES=$(kubectl get nodes -o name)
+for node in $NODES; do
+  kubectl label $node topology.kubernetes.io/region=$REGION --overwrite > /dev/null 2>&1
+  kubectl label $node topology.kubernetes.io/zone=$AZ --overwrite > /dev/null 2>&1
+done
+
+# ==============================================================================
+# STEP 3: PATCHING (THE FIX FOR PORT CONFLICT)
+# ==============================================================================
+echo -e "${GREEN}[3] Menerapkan Patch Config...${NC}"
+
+# A. Patch DaemonSet (Node) -> WAJIB HostNetwork (Untuk mount disk di host)
+echo "   -> Patching DaemonSet (Node): Enable HostNetwork..."
 kubectl patch daemonset ebs-csi-node -n kube-system -p '{"spec": {"template": {"spec": {"hostNetwork": true}}}}'
-kubectl patch deployment ebs-csi-controller -n kube-system -p '{"spec": {"template": {"spec": {"hostNetwork": true}}}}'
+
+# B. Patch Deployment (Controller) -> DILARANG HostNetwork (Agar tidak bentrok port 9808)
+# Kita pastikan hostNetwork TIDAK aktif di controller
+echo "   -> Patching Deployment (Controller): Disable HostNetwork (Anti-Port Conflict)..."
+kubectl patch deployment ebs-csi-controller -n kube-system --type=json -p='[{"op": "remove", "path": "/spec/template/spec/hostNetwork"}]' 2>/dev/null || true
+
+# C. Set Environment Variable Region
+echo "   -> Setting AWS_REGION environment variable..."
+kubectl set env daemonset -n kube-system ebs-csi-node AWS_REGION=$REGION -c ebs-plugin
+kubectl set env deployment -n kube-system ebs-csi-controller AWS_REGION=$REGION -c ebs-plugin
 
 # ==============================================================================
-# PATCH 2: SCHEDULING FIX (Solusi Pending Forever)
+# STEP 4: SCHEDULING FIX
 # ==============================================================================
-echo -e "${GREEN}[3] Memperbaiki Scheduling (Agar Controller jalan di Master)...${NC}"
+echo -e "${GREEN}[4] Memperbaiki Scheduling (Allow Master)...${NC}"
 
-# A. Buka Taint di Master (Agar Controller bisa masuk)
-echo "   -> Untainting Control Plane..."
+# Untaint Master
 kubectl taint nodes --all node-role.kubernetes.io/control-plane- > /dev/null 2>&1 || true
 kubectl taint nodes --all node-role.kubernetes.io/master- > /dev/null 2>&1 || true
 
-# B. Hapus NodeSelector (Agar Controller tidak pilih-pilih OS/Label)
-echo "   -> Menghapus NodeSelector pada Controller..."
+# Hapus NodeSelector agar Controller bisa jalan dimana saja
 kubectl patch deployment ebs-csi-controller -n kube-system --type=json -p='[
   {"op": "remove", "path": "/spec/template/spec/nodeSelector"},
   {"op": "remove", "path": "/spec/template/spec/affinity"}
-]' > /dev/null 2>&1 || echo "   (NodeSelector/Affinity sudah bersih)"
+]' > /dev/null 2>&1 || true
 
 # ==============================================================================
-# PATCH 3: AUTO REGION
-# ==============================================================================
-echo -e "${GREEN}[4] Mendeteksi & Setting Region AWS...${NC}"
-# Mengambil region otomatis dari metadata server (Magic!)
-REGION=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone | sed 's/[a-z]$//')
-
-if [ -z "$REGION" ]; then
-    REGION="ap-southeast-1" # Fallback jika gagal detect
-    echo -e "${RED}   ! Gagal detect region, menggunakan default: $REGION${NC}"
-else
-    echo -e "${YELLOW}   -> Region terdeteksi: $REGION${NC}"
-fi
-
-kubectl set env daemonset -n kube-system ebs-csi-node AWS_REGION=$REGION -c ebs-plugin
-
-# ==============================================================================
-# STEP 4: CREATE STORAGE CLASS
+# STEP 5: CREATE STORAGE CLASS
 # ==============================================================================
 echo -e "${GREEN}[5] Membuat StorageClass Default (gp3)...${NC}"
 cat <<EOF | kubectl apply -f -
