@@ -103,6 +103,7 @@ metadata:
     storageclass.kubernetes.io/is-default-class: "true"
 provisioner: ebs.csi.aws.com
 volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
 parameters:
   type: gp3
   fsType: ext4
