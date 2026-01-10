@@ -13,5 +13,5 @@ curl -sL https://raw.githubusercontent.com/itsanla/system/refs/heads/main/kubern
 curl -sL https://raw.githubusercontent.com/itsanla/system/refs/heads/main/kubernetes/kube-storage.sh | bash
 ```
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/itsanla/system/refs/heads/main/kubernetes/sc-gp3.yaml
+echo "vm.max_map_count=262144" | sudo tee -a /etc/sysctl.conf
 ```
