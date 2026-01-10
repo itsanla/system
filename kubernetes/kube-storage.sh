@@ -104,6 +104,7 @@ metadata:
 provisioner: ebs.csi.aws.com
 volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: true
+reclaimPolicy: Delete
 parameters:
   type: gp3
   fsType: ext4
