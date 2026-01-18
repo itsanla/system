@@ -21,3 +21,6 @@ curl -o ssm-run.sh -L https://raw.githubusercontent.com/itsanla/system/refs/head
 chmod +x ssm-run.sh
 ./ssm-run.sh
 ```
+```bash
+curl -sL https://raw.githubusercontent.com/itsanla/system/refs/heads/main/aws/stop-destination-checking.sh | bash
+```
