@@ -4,7 +4,7 @@ services:
     container_name: flutter-dev
     working_dir: /app
     volumes:
-      - ./workspace:/app
+      - /home/anla/project:/app
     ports:
       - "8090:8090"   # untuk: flutter run -d web-server --web-hostname=0.0.0.0 --web-port=8090
     tty: true
@@ -18,3 +18,5 @@ services:
 #   flutter build apk --release                                    # build APK
 #   flutter run -d web-server --web-hostname=0.0.0.0 --web-port=8090  # preview UI lewat browser
 # Catatan: port 8080/8081/8000 di host VPS sudah dipakai Coolify/Traefik, jangan dipakai ulang.
+# /home/anla/project di-mount ke /app supaya semua repo yang di-clone ke ~/project/<repo>
+# (sesuai konvensi bima.md) otomatis kelihatan di dalam container tanpa perlu compose baru.
