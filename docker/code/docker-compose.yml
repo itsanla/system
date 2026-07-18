@@ -8,9 +8,10 @@ services:
       - PGID=1000
       - TZ=Asia/Jakarta
       - PASSWORD=${CODE_SERVER_PASSWORD}
-      - DEFAULT_WORKSPACE=/config/workspace
+      - DEFAULT_WORKSPACE=/home/anla
     volumes:
       - ./config:/config
+      - /home/anla:/home/anla
     networks:
       - coolify
     labels:
@@ -34,4 +35,4 @@ networks:
 #   1. buat file .env di folder yang sama: CODE_SERVER_PASSWORD=<password kuat>
 #   2. pastikan DNS code.anla.my.id -> IP VPS sudah mengarah dengan benar
 #   3. docker compose up -d
-#   4. project/workspace ditaruh di ./config/workspace (persist lewat volume ./config)
+#   4. seluruh /home/anla di-mount ke container (termasuk .ssh!) - hanya untuk penggunaan personal tepercaya.
