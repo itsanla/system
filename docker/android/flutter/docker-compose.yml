@@ -6,7 +6,7 @@ services:
     volumes:
       - ./workspace:/app
     ports:
-      - "8080:8080"   # untuk: flutter run -d web-server --web-hostname=0.0.0.0 --web-port=8080
+      - "8090:8090"   # untuk: flutter run -d web-server --web-hostname=0.0.0.0 --web-port=8090
     tty: true
     stdin_open: true
     command: ["tail", "-f", "/dev/null"]
@@ -16,4 +16,5 @@ services:
 #   docker compose up -d
 #   docker compose exec flutter bash
 #   flutter build apk --release                                    # build APK
-#   flutter run -d web-server --web-hostname=0.0.0.0 --web-port=8080  # preview UI lewat browser
+#   flutter run -d web-server --web-hostname=0.0.0.0 --web-port=8090  # preview UI lewat browser
+# Catatan: port 8080/8081/8000 di host VPS sudah dipakai Coolify/Traefik, jangan dipakai ulang.
