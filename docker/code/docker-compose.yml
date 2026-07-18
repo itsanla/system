@@ -1,0 +1,37 @@
+services:
+  code-server:
+    image: lscr.io/linuxserver/code-server:latest
+    container_name: personal-code-server
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Jakarta
+      - PASSWORD=${CODE_SERVER_PASSWORD}
+      - DEFAULT_WORKSPACE=/config/workspace
+    volumes:
+      - ./config:/config
+    networks:
+      - coolify
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=coolify"
+      - "traefik.http.routers.codeserver.rule=Host(`code.anla.my.id`)"
+      - "traefik.http.routers.codeserver.entrypoints=https"
+      - "traefik.http.routers.codeserver.tls=true"
+      - "traefik.http.routers.codeserver.tls.certresolver=letsencrypt"
+      - "traefik.http.services.codeserver.loadbalancer.server.port=8443"
+      - "traefik.http.routers.codeserver-http.rule=Host(`code.anla.my.id`)"
+      - "traefik.http.routers.codeserver-http.entrypoints=http"
+      - "traefik.http.routers.codeserver-http.middlewares=codeserver-https-redirect"
+      - "traefik.http.middlewares.codeserver-https-redirect.redirectscheme.scheme=https"
+
+networks:
+  coolify:
+    external: true
+
+# Pemakaian:
+#   1. buat file .env di folder yang sama: CODE_SERVER_PASSWORD=<password kuat>
+#   2. pastikan DNS code.anla.my.id -> IP VPS sudah mengarah dengan benar
+#   3. docker compose up -d
+#   4. project/workspace ditaruh di ./config/workspace (persist lewat volume ./config)

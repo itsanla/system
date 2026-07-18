@@ -1,0 +1,164 @@
+================================================================================
+                    PENJELASAN ON DALAM SQL JOIN
+================================================================================
+
+❓ APA ITU ON?
+===============================================================================
+
+ON adalah KONDISI PENGHUBUNG antara 2 table dalam operasi JOIN.
+Fungsinya untuk mencocokkan data berdasarkan kolom yang sama di kedua table.
+
+
+📌 SYNTAX DASAR
+===============================================================================
+
+SELECT kolom1, kolom2, kolom3
+FROM table1 t1
+INNER JOIN table2 t2 ON t1.kolom_sama = t2.kolom_sama
+                       └─ Kondisi penghubung (ON Clause)
+
+
+📊 ANALOGI SEDERHANA
+===============================================================================
+
+Bayangkan 2 daftar:
+- Daftar A: Nama customer + ID
+- Daftar B: Transaksi + ID customer
+
+ON = "Cocokkan ID di kedua daftar, jika SAMA = pasangkan datanya"
+
+
+🔗 CONTOH KONKRET
+===============================================================================
+
+TABLE DIM_CUSTOMER:
+┌────────────┬────────┬────────┐
+│customer_id │ gender │ age    │
+├────────────┼────────┼────────┤
+│ C0001      │ Male   │ 38     │
+│ C0002      │ Female │ 49     │
+│ C0003      │ Male   │ 40     │
+└────────────┴────────┴────────┘
+
+
+TABLE DIM_TRANSACTION:
+┌────────────────┬────────────┬──────────────┐
+│transaction_id  │ customer_id│ total_spent  │
+├────────────────┼────────────┼──────────────┤
+│ 1              │ C0001      │ 36651252     │
+│ 2              │ C0002      │ 14010172     │
+│ 3              │ C0003      │ 38369932     │
+└────────────────┴────────────┴──────────────┘
+
+
+QUERY DENGAN ON:
+===============================================================================
+
+SELECT
+  c.customer_id,
+  c.gender,
+  t.total_spent
+FROM dim_customer c
+INNER JOIN dim_transaction t
+  ON c.customer_id = t.customer_id
+  └─ COCOKKAN customer_id di kedua table
+
+HASIL:
+┌────────────┬────────┬──────────────┐
+│customer_id │ gender │ total_spent  │
+├────────────┼────────┼──────────────┤
+│ C0001      │ Male   │ 36651252     │
+│ C0002      │ Female │ 14010172     │
+│ C0003      │ Male   │ 38369932     │
+└────────────┴────────┴──────────────┘
+
+
+🎯 KAPAN MENGGUNAKAN ON?
+===============================================================================
+
+✅ SELALU gunakan ON saat:
+   - Menggabungkan 2 atau lebih table
+   - Menggunakan Primary Key (PK) dan Foreign Key (FK)
+   - Ingin mencocokkan kolom yang sama
+
+
+❌ JANGAN GUNAKAN ON saat:
+   - Hanya query dari 1 table (tidak ada JOIN)
+   - Membuat CROSS JOIN (tanpa kondisi penghubung)
+
+
+⚙️ ON vs WHERE
+===============================================================================
+
+ON  = Kondisi SEBELUM penggabungan table
+WHERE = Kondisi SETELAH penggabungan table
+
+CONTOH:
+SELECT c.customer_id, t.total_spent
+FROM dim_customer c
+INNER JOIN dim_transaction t ON c.customer_id = t.customer_id
+                                └─ ON: hubungkan kedua table
+WHERE t.total_spent > 30000000
+      └─ WHERE: filter hasil yang sudah di-join
+
+
+🔑 ON MENGGUNAKAN PRIMARY KEY & FOREIGN KEY
+===============================================================================
+
+PRIMARY KEY = Identitas unik table
+FOREIGN KEY = Referensi ke PRIMARY KEY table lain
+
+CONTOH DALAM DATABASE KAMI:
+
+dim_customer:
+  ┌─────────────────┐
+  │ PK customer_id  │ ← Identitas unik pelanggan
+  │ gender          │
+  │ age             │
+  └─────────────────┘
+
+dim_transaction:
+  ┌──────────────────┐
+  │ PK transaction_id│
+  │ FK customer_id   │ ← Referensi ke dim_customer
+  │ total_spent      │
+  └──────────────────┘
+
+ON menghubungkan:
+  dim_customer.customer_id (PK) ←→ dim_transaction.customer_id (FK)
+
+
+📋 JENIS-JENIS JOIN & ON
+===============================================================================
+
+1. INNER JOIN (hanya yang cocok)
+   SELECT * FROM c INNER JOIN t ON c.id = t.id
+
+2. LEFT JOIN (semua dari kiri + yang cocok di kanan)
+   SELECT * FROM c LEFT JOIN t ON c.id = t.id
+
+3. RIGHT JOIN (semua dari kanan + yang cocok di kiri)
+   SELECT * FROM c RIGHT JOIN t ON c.id = t.id
+
+4. FULL OUTER JOIN (semua data dari kedua table)
+   SELECT * FROM c FULL OUTER JOIN t ON c.id = t.id
+
+5. CROSS JOIN (tanpa ON, semua kombinasi)
+   SELECT * FROM c CROSS JOIN t
+
+
+💡 KESIMPULAN
+===============================================================================
+
+ON = Kondisi untuk MENGHUBUNGKAN 2 table berdasarkan kolom yang sama
+     (biasanya Primary Key dan Foreign Key)
+
+Tanpa ON, database tidak tahu cara menggabungkan data dari 2 table yang berbeda.
+
+Contoh sederhana:
+  "Hubungkan customer dengan transaksinya berdasarkan customer_id"
+
+================================================================================
+Generated: 2026-04-28
+Database: mydb (MySQL 8.0)
+================================================================================

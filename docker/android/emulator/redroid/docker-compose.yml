@@ -1,0 +1,21 @@
+services:
+  emulator:
+    image: redroid/redroid:15.0.0_64only-latest
+    container_name: redroid-emulator
+    privileged: true
+    stdin_open: true
+    tty: true
+    ports:
+      - "5555:5555"
+    volumes:
+      - /home/itsanla/redroid-data:/data
+    devices:
+      - /dev/binder:/dev/binder
+      - /dev/hwbinder:/dev/hwbinder
+      - /dev/vndbinder:/dev/vndbinder
+    command:
+      - androidboot.redroid_width=1080
+      - androidboot.redroid_height=2400
+      - androidboot.redroid_dpi=393
+      - androidboot.redroid_fps=60
+      - androidboot.redroid_gpu_mode=auto

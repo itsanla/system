@@ -1,0 +1,25 @@
+version: '3.9'
+
+services:
+  gmail-emulator:
+    image: redroid/redroid:15.0.0_64only-latest
+    container_name: gmail-redroid
+    privileged: true
+    ports:
+      - "5555:5555"
+
+    # === INI YANG PENTING: NON-PERSISTENT ===
+    # Hilang total saat docker compose down
+    tmpfs:
+      - /data:size=3G,mode=1777   # 3GB RAM disk (cukup untuk Android 15 + Gmail)
+
+    # Parameter performa (sama seperti punya kamu)
+    command:
+      - androidboot.redroid_width=720
+      - androidboot.redroid_height=1280
+      - androidboot.redroid_fps=60
+      - androidboot.redroid_gpu_mode=host
+
+    stdin_open: true
+    tty: true
+    restart: "no"          # biar tidak auto restart

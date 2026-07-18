@@ -1,0 +1,310 @@
+================================================================================
+              QUERY VISUALISASI - SNOWFLAKE SCHEMA RUMAH SAKIT
+              Database: db_snowflake_rumahsakit
+================================================================================
+
+-- SKEMA RELASI:
+-- fact_hospital_visit
+--   → dim_date → dim_month → dim_quarter → dim_year
+--   → dim_patient → dim_city
+--              → dim_insurance
+--   → dim_doctor → dim_department
+--              → dim_specialty
+--              → dim_doctor_level
+--   → dim_service → dim_service_category
+--   → dim_payment → dim_payment_category
+
+
+--------------------------------------------------------------------------------
+1. KPI SUMMARY - Total Kunjungan (Number Card)
+--------------------------------------------------------------------------------
+
+SELECT COUNT(*) AS total_kunjungan
+FROM fact_hospital_visit;
+
+
+--------------------------------------------------------------------------------
+2. KPI SUMMARY - Total Pendapatan Bersih (Number Card)
+--------------------------------------------------------------------------------
+
+SELECT SUM(net_amount) AS total_pendapatan
+FROM fact_hospital_visit;
+
+
+--------------------------------------------------------------------------------
+3. KPI SUMMARY - Rata-rata Kepuasan Pasien (Number Card)
+--------------------------------------------------------------------------------
+
+SELECT ROUND(AVG(patient_satisfaction_score), 2) AS avg_kepuasan
+FROM fact_hospital_visit;
+
+
+--------------------------------------------------------------------------------
+4. KPI SUMMARY - Total Diskon Diberikan (Number Card)
+--------------------------------------------------------------------------------
+
+SELECT SUM(discount_amount) AS total_diskon
+FROM fact_hospital_visit;
+
+
+--------------------------------------------------------------------------------
+5. TREN PENDAPATAN PER BULAN (Line Chart)
+   X: bulan, Y: total_pendapatan
+--------------------------------------------------------------------------------
+
+SELECT
+    dm.month_name                        AS bulan,
+    dm.month                             AS urutan_bulan,
+    COUNT(f.visit_id)                    AS total_kunjungan,
+    SUM(f.net_amount)                    AS total_pendapatan,
+    SUM(f.discount_amount)               AS total_diskon,
+    ROUND(AVG(f.net_amount), 2)          AS rata_pendapatan_per_kunjungan
+FROM fact_hospital_visit f
+JOIN dim_date dd  ON f.date_id  = dd.date_id
+JOIN dim_month dm ON dd.month_id = dm.month_id
+GROUP BY dm.month_id, dm.month_name, dm.month
+ORDER BY dm.month;
+
+
+--------------------------------------------------------------------------------
+6. KUNJUNGAN & PENDAPATAN PER DEPARTEMEN (Bar Chart)
+   X: department_name, Y: total_kunjungan atau total_pendapatan
+--------------------------------------------------------------------------------
+
+SELECT
+    dep.department_name                  AS departemen,
+    dep.department_type                  AS tipe_departemen,
+    COUNT(f.visit_id)                    AS total_kunjungan,
+    SUM(f.net_amount)                    AS total_pendapatan,
+    ROUND(AVG(f.patient_satisfaction_score), 2) AS avg_kepuasan,
+    ROUND(AVG(f.length_of_stay_days), 2) AS rata_lama_rawat
+FROM fact_hospital_visit f
+JOIN dim_doctor    doc ON f.doctor_id       = doc.doctor_id
+JOIN dim_department dep ON doc.department_id = dep.department_id
+GROUP BY dep.department_id, dep.department_name, dep.department_type
+ORDER BY total_pendapatan DESC;
+
+
+--------------------------------------------------------------------------------
+7. DISTRIBUSI TIPE KUNJUNGAN (Pie Chart)
+   label: visit_type, value: jumlah_kunjungan
+--------------------------------------------------------------------------------
+
+SELECT
+    visit_type                           AS tipe_kunjungan,
+    COUNT(*)                             AS jumlah_kunjungan,
+    SUM(net_amount)                      AS total_pendapatan,
+    ROUND(AVG(net_amount), 2)            AS rata_pendapatan,
+    ROUND(AVG(length_of_stay_days), 2)   AS rata_lama_rawat
+FROM fact_hospital_visit
+GROUP BY visit_type
+ORDER BY jumlah_kunjungan DESC;
+
+
+--------------------------------------------------------------------------------
+8. TOP 10 DOKTER BERDASARKAN JUMLAH KUNJUNGAN (Row/Bar Chart Horizontal)
+   X: jumlah_kunjungan, Y: nama_dokter
+--------------------------------------------------------------------------------
+
+SELECT
+    doc.doctor_name                      AS nama_dokter,
+    dep.department_name                  AS departemen,
+    sp.specialty                         AS spesialisasi,
+    dl.doctor_level                      AS level_dokter,
+    COUNT(f.visit_id)                    AS total_kunjungan,
+    SUM(f.net_amount)                    AS total_pendapatan,
+    ROUND(AVG(f.patient_satisfaction_score), 2) AS avg_kepuasan
+FROM fact_hospital_visit f
+JOIN dim_doctor      doc ON f.doctor_id        = doc.doctor_id
+JOIN dim_department  dep ON doc.department_id  = dep.department_id
+JOIN dim_specialty    sp ON doc.specialty_id   = sp.specialty_id
+JOIN dim_doctor_level dl ON doc.doctor_level_id = dl.doctor_level_id
+GROUP BY doc.doctor_id, doc.doctor_name, dep.department_name, sp.specialty, dl.doctor_level
+ORDER BY total_kunjungan DESC
+LIMIT 10;
+
+
+--------------------------------------------------------------------------------
+9. PENDAPATAN PER KATEGORI LAYANAN (Bar Chart)
+   X: service_category, Y: total_pendapatan_bersih
+--------------------------------------------------------------------------------
+
+SELECT
+    sc.service_category                  AS kategori_layanan,
+    COUNT(f.visit_id)                    AS total_kunjungan,
+    SUM(f.quantity)                      AS total_quantity,
+    SUM(f.gross_amount)                  AS total_pendapatan_kotor,
+    SUM(f.discount_amount)               AS total_diskon,
+    SUM(f.net_amount)                    AS total_pendapatan_bersih,
+    ROUND(AVG(f.net_amount), 2)          AS rata_pendapatan
+FROM fact_hospital_visit f
+JOIN dim_service          sv ON f.service_id          = sv.service_id
+JOIN dim_service_category sc ON sv.service_category_id = sc.service_category_id
+GROUP BY sc.service_category_id, sc.service_category
+ORDER BY total_pendapatan_bersih DESC;
+
+
+--------------------------------------------------------------------------------
+10. DISTRIBUSI PASIEN PER JENIS ASURANSI (Pie Chart)
+    label: insurance_type, value: jumlah_pasien
+--------------------------------------------------------------------------------
+
+SELECT
+    ins.insurance_type                   AS jenis_asuransi,
+    COUNT(DISTINCT f.patient_id)         AS jumlah_pasien,
+    COUNT(f.visit_id)                    AS total_kunjungan,
+    SUM(f.net_amount)                    AS total_pendapatan
+FROM fact_hospital_visit f
+JOIN dim_patient  p   ON f.patient_id  = p.patient_id
+JOIN dim_insurance ins ON p.insurance_id = ins.insurance_id
+GROUP BY ins.insurance_id, ins.insurance_type
+ORDER BY total_kunjungan DESC;
+
+
+--------------------------------------------------------------------------------
+11. KUNJUNGAN BERDASARKAN KOTA PASIEN (Bar Chart)
+    X: kota, Y: total_kunjungan
+--------------------------------------------------------------------------------
+
+SELECT
+    c.city                               AS kota,
+    COUNT(DISTINCT f.patient_id)         AS jumlah_pasien,
+    COUNT(f.visit_id)                    AS total_kunjungan,
+    SUM(f.net_amount)                    AS total_pendapatan,
+    ROUND(AVG(f.patient_satisfaction_score), 2) AS avg_kepuasan
+FROM fact_hospital_visit f
+JOIN dim_patient p ON f.patient_id = p.patient_id
+JOIN dim_city    c ON p.city_id    = c.city_id
+GROUP BY c.city_id, c.city
+ORDER BY total_kunjungan DESC;
+
+
+--------------------------------------------------------------------------------
+12. DISTRIBUSI METODE PEMBAYARAN (Pie Chart)
+    label: payment_method, value: jumlah_transaksi
+--------------------------------------------------------------------------------
+
+SELECT
+    pay.payment_method                   AS metode_pembayaran,
+    pc.payment_category                  AS kategori_pembayaran,
+    COUNT(f.visit_id)                    AS jumlah_transaksi,
+    SUM(f.net_amount)                    AS total_pendapatan,
+    ROUND(AVG(f.net_amount), 2)          AS rata_nilai_transaksi
+FROM fact_hospital_visit f
+JOIN dim_payment          pay ON f.payment_id          = pay.payment_id
+JOIN dim_payment_category  pc ON pay.payment_category_id = pc.payment_category_id
+GROUP BY pay.payment_id, pay.payment_method, pc.payment_category
+ORDER BY total_pendapatan DESC;
+
+
+--------------------------------------------------------------------------------
+13. DISTRIBUSI PASIEN BERDASARKAN GENDER & KELOMPOK UMUR (Stacked Bar)
+    X: age_group, Y: jumlah_pasien, warna: gender
+--------------------------------------------------------------------------------
+
+SELECT
+    p.age_group                          AS kelompok_umur,
+    p.gender                             AS gender,
+    COUNT(DISTINCT f.patient_id)         AS jumlah_pasien,
+    COUNT(f.visit_id)                    AS total_kunjungan,
+    SUM(f.net_amount)                    AS total_pendapatan
+FROM fact_hospital_visit f
+JOIN dim_patient p ON f.patient_id = p.patient_id
+GROUP BY p.age_group, p.gender
+ORDER BY
+    FIELD(p.age_group, '0-12', '13-18', '19-35', '36-50', '51-65', '>65'),
+    p.gender;
+
+
+--------------------------------------------------------------------------------
+14. RATA-RATA KEPUASAN PASIEN PER LEVEL DOKTER (Bar Chart)
+    X: doctor_level, Y: avg_kepuasan
+--------------------------------------------------------------------------------
+
+SELECT
+    dl.doctor_level                      AS level_dokter,
+    COUNT(f.visit_id)                    AS total_kunjungan,
+    ROUND(AVG(f.patient_satisfaction_score), 2) AS avg_kepuasan,
+    MIN(f.patient_satisfaction_score)    AS min_kepuasan,
+    MAX(f.patient_satisfaction_score)    AS max_kepuasan,
+    SUM(f.net_amount)                    AS total_pendapatan
+FROM fact_hospital_visit f
+JOIN dim_doctor       doc ON f.doctor_id         = doc.doctor_id
+JOIN dim_doctor_level  dl ON doc.doctor_level_id = dl.doctor_level_id
+GROUP BY dl.doctor_level_id, dl.doctor_level
+ORDER BY avg_kepuasan DESC;
+
+
+--------------------------------------------------------------------------------
+15. PENDAPATAN PER QUARTER (Bar Chart)
+    X: quarter, Y: total_pendapatan
+--------------------------------------------------------------------------------
+
+SELECT
+    dy.year                              AS tahun,
+    CONCAT('Q', dq.quarter)             AS quarter,
+    dq.quarter_id                        AS quarter_id,
+    COUNT(f.visit_id)                    AS total_kunjungan,
+    SUM(f.net_amount)                    AS total_pendapatan,
+    SUM(f.discount_amount)               AS total_diskon,
+    ROUND(AVG(f.patient_satisfaction_score), 2) AS avg_kepuasan
+FROM fact_hospital_visit f
+JOIN dim_date    dd ON f.date_id    = dd.date_id
+JOIN dim_month   dm ON dd.month_id  = dm.month_id
+JOIN dim_quarter dq ON dm.quarter_id = dq.quarter_id
+JOIN dim_year    dy ON dq.year_id   = dy.year_id
+GROUP BY dy.year, dq.quarter_id, dq.quarter
+ORDER BY dy.year, dq.quarter;
+
+
+--------------------------------------------------------------------------------
+16. ANALISIS LAMA RAWAT INAP PER DEPARTEMEN (Bar Chart)
+    X: departemen, Y: rata_lama_rawat  — hanya kunjungan Inpatient
+--------------------------------------------------------------------------------
+
+SELECT
+    dep.department_name                  AS departemen,
+    COUNT(f.visit_id)                    AS total_inpatient,
+    ROUND(AVG(f.length_of_stay_days), 2) AS rata_lama_rawat,
+    MIN(f.length_of_stay_days)           AS min_hari,
+    MAX(f.length_of_stay_days)           AS max_hari,
+    SUM(f.net_amount)                    AS total_pendapatan
+FROM fact_hospital_visit f
+JOIN dim_doctor    doc ON f.doctor_id       = doc.doctor_id
+JOIN dim_department dep ON doc.department_id = dep.department_id
+WHERE f.visit_type = 'Inpatient'
+GROUP BY dep.department_id, dep.department_name
+ORDER BY rata_lama_rawat DESC;
+
+
+================================================================================
+                 CATATAN PENGGUNAAN QUERY SNOWFLAKE SCHEMA
+================================================================================
+
+* Database  : db_snowflake_rumahsakit
+* Fact Table: fact_hospital_visit (500 baris)
+* Dimensi   : 16 tabel (fully normalized snowflake)
+
+* Cara pakai di Metabase:
+  1. Klik "Baru" → "Pertanyaan" → pilih database "snowflake"
+  2. Klik ikon SQL (Native Query)
+  3. Copy-paste salah satu query di atas
+  4. Tekan Ctrl+Enter atau klik tombol Run (▶)
+  5. Pilih tipe visualisasi di tab "Visualisasi" (bawah)
+
+* Rekomendasi visualisasi per query:
+  1-4  → Number (4 kartu terpisah untuk dashboard KPI)
+  5    → Line Chart
+  6    → Bar Chart
+  7    → Pie Chart
+  8    → Row Chart (horizontal bar)
+  9    → Bar Chart
+  10   → Pie Chart
+  11   → Bar Chart
+  12   → Pie Chart
+  13   → Stacked Bar Chart
+  14   → Bar Chart
+  15   → Bar Chart / Line Chart
+  16   → Bar Chart
+
+================================================================================

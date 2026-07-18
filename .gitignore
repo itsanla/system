@@ -1,0 +1,11 @@
+# Never commit downloaded installer binaries - use install.sh scripts instead
+*.deb
+*.rpm
+*.exe
+*.msi
+*.dmg
+*.AppImage
+*.tar.gz
+*.tar.xz
+*.zip
+!**/windows-data/**

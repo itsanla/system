@@ -1,0 +1,19 @@
+services:
+  flutter:
+    image: mobiledevops/flutter-sdk-image:latest
+    container_name: flutter-dev
+    working_dir: /app
+    volumes:
+      - ./workspace:/app
+    ports:
+      - "8080:8080"   # untuk: flutter run -d web-server --web-hostname=0.0.0.0 --web-port=8080
+    tty: true
+    stdin_open: true
+    command: ["tail", "-f", "/dev/null"]
+    restart: unless-stopped
+
+# Pemakaian:
+#   docker compose up -d
+#   docker compose exec flutter bash
+#   flutter build apk --release                                    # build APK
+#   flutter run -d web-server --web-hostname=0.0.0.0 --web-port=8080  # preview UI lewat browser

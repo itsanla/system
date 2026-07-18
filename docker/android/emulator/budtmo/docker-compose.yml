@@ -1,0 +1,17 @@
+version: "3"
+services:
+  android-emulator:
+    image: budtmo/docker-android:emulator_11.0
+    container_name: android_container
+    privileged: true
+    restart: unless-stopped
+    ports:
+      - "6080:6080"  # Untuk melihat layar emulator via Browser
+      - "5555:5555"  # Untuk koneksi ADB Flutter
+    devices:
+      - "/dev/kvm:/dev/kvm" # WAJIB: Hardware Acceleration
+    environment:
+      - DEVICE="Samsung Galaxy S10" # Device umum
+      - EMULATOR_ARGS="-no-window -gpu swiftshader_indirect" # Agar stabil di server/background
+    volumes:
+      - ./android_data:/root/android_home # Agar data login Google tidak hilang saat restart

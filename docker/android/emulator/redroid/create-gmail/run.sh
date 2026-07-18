@@ -1,10 +1,10 @@
  #!/bin/bash
 
-echo "--- Menjalankan Redroid Emulator ---"
+echo "--- Menjalankan Redroid Emulator untuk pembuat gmail---"
 
 # 1. Jalankan Docker Compose
 # Pastikan Anda menjalankan script ini di folder yang sama dengan docker-compose.yml
-docker compose up -d
+docker compose -f gmail-redroid.yml up -d
 
 echo "Menunggu Android booting (10 detik)..."
 sleep 10
@@ -16,4 +16,4 @@ adb connect localhost:5555
 # 3. Jalankan scrcpy
 echo "Membuka tampilan layar..."
 # Menggunakan shortcut L-Ctrl untuk navigasi (Back/Home/Recents)
-scrcpy -s localhost:5555 --shortcut-mod=lctrl --always-on-top
+scrcpy -s localhost:5555 --shortcut-mod=lctrl
