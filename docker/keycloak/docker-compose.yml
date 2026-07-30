@@ -11,6 +11,8 @@ services:
       - KC_PROXY_HEADERS=xforwarded
       - KC_HOSTNAME=sso.anla.my.id
     restart: unless-stopped
+    volumes:
+      - ./providers:/opt/keycloak/providers
     networks:
       - default
       - coolify
