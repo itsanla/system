@@ -12,8 +12,8 @@ services:
       - KC_HOSTNAME=sso.anla.my.id
     restart: unless-stopped
     volumes:
-      - ./data:/opt/keycloak/data
-      - ./providers:/opt/keycloak/providers
+      - /home/anla/backup/keycloak/data:/opt/keycloak/data
+      - /home/anla/backup/keycloak/providers:/opt/keycloak/providers
     networks:
       - default
       - coolify
