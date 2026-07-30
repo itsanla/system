@@ -12,6 +12,7 @@ services:
       - KC_HOSTNAME=sso.anla.my.id
     restart: unless-stopped
     volumes:
+      - ./data:/opt/keycloak/data
       - ./providers:/opt/keycloak/providers
     networks:
       - default
