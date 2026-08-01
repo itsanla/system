@@ -5,8 +5,13 @@ services:
     restart: unless-stopped
     environment:
       - DOMAIN=https://secret.anla.my.id
-      - SIGNUPS_ALLOWED=true
+      - SIGNUPS_ALLOWED=false
       - ADMIN_TOKEN=${ADMIN_TOKEN}
+      - SSO_ENABLED=true
+      - SSO_AUTHORITY=https://sso.anla.my.id/realms/master
+      - SSO_CLIENT_ID=secret
+      - SSO_CLIENT_SECRET=${SSO_CLIENT_SECRET}
+      - SSO_SCOPES=openid profile email offline_access
     env_file:
       - .env
     ports:
