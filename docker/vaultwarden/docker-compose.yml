@@ -1,0 +1,35 @@
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden-app
+    restart: unless-stopped
+    environment:
+      - DOMAIN=https://secret.anla.my.id
+      - SIGNUPS_ALLOWED=true
+      - ADMIN_TOKEN=${ADMIN_TOKEN}
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:8222:80"
+    volumes:
+      - /home/anla/backup/vaultwarden:/data
+    networks:
+      - default
+      - coolify
+    labels:
+      - "traefik.enable=false"
+      - "traefik.docker.network=coolify"
+      - "traefik.http.routers.vaultwarden-http.rule=Host(`secret.anla.my.id`)"
+      - "traefik.http.routers.vaultwarden-http.entrypoints=http"
+      - "traefik.http.routers.vaultwarden-http.middlewares=vaultwarden-redirect-to-https"
+      - "traefik.http.middlewares.vaultwarden-redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.routers.vaultwarden-https.rule=Host(`secret.anla.my.id`)"
+      - "traefik.http.routers.vaultwarden-https.entrypoints=https"
+      - "traefik.http.routers.vaultwarden-https.tls=true"
+      - "traefik.http.routers.vaultwarden-https.tls.certresolver=letsencrypt"
+      - "traefik.http.services.vaultwarden-service.loadbalancer.server.port=80"
+
+networks:
+  coolify:
+    name: coolify
+    external: true
