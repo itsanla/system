@@ -17,7 +17,7 @@ services:
       - default
       - coolify
     labels:
-      - "traefik.enable=false"
+      - "traefik.enable=true"
       - "traefik.docker.network=coolify"
       - "traefik.http.routers.vaultwarden-http.rule=Host(`secret.anla.my.id`)"
       - "traefik.http.routers.vaultwarden-http.entrypoints=http"
